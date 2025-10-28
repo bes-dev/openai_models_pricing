@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 
-PRICING_URL = "https://openai.com/api/pricing/"
+PRICING_URL = "https://platform.openai.com/docs/pricing"
 OUTPUT_FILE = "github_pages/pricing.json"
 API_FILE = "github_pages/api.json"
 HISTORY_FILE = "github_pages/history.json"

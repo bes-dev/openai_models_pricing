@@ -41,25 +41,40 @@ Fork this repository to your GitHub account.
 
 ### 2. Enable GitHub Pages
 
-1. Go to Settings → Pages
-2. Source: select "GitHub Actions"
-3. Save settings
+**Important:** You must enable GitHub Pages before the workflow can deploy.
+
+1. Go to your repository on GitHub
+2. Click **Settings** (top menu)
+3. Scroll down to **Pages** (left sidebar)
+4. Under **Source**, select **GitHub Actions** from the dropdown
+5. Click **Save** (if available)
+
+> **Note:** If you don't see the "GitHub Actions" option:
+> - Make sure your repository is **public** (or you have GitHub Pro for private repos)
+> - The workflow must run at least once to create the deployment
+> - You may need to wait a few seconds and refresh the page
 
 ### 3. Enable GitHub Actions
 
-1. Go to the Actions tab
-2. Click "I understand my workflows, go ahead and enable them"
-3. Workflow will run automatically on push or on schedule (daily at 12:00 UTC)
+1. Go to the **Actions** tab
+2. If prompted, click **"I understand my workflows, go ahead and enable them"**
+3. The workflow will run automatically on push or on schedule (daily at 12:00 UTC)
 
-### 4. Run Workflow Manually (Optional)
+### 4. Run Workflow Manually
 
-1. Go to Actions → Update OpenAI Pricing
-2. Click "Run workflow" → "Run workflow"
-3. Wait for completion (~1-2 minutes)
+1. Go to **Actions** → **Update OpenAI Pricing**
+2. Click **"Run workflow"** dropdown (right side)
+3. Select branch (usually `main` or `master`)
+4. Click green **"Run workflow"** button
+5. Wait for completion (~2-3 minutes)
+6. If it fails with "Pages not enabled", go back to step 2 and enable Pages first
 
 ### 5. Check the Result
 
-Open `https://<your-username>.github.io/openai_models_pricing/`
+After the workflow completes successfully:
+- Open `https://<your-username>.github.io/openai_models_pricing/`
+- It may take 1-2 minutes for the site to become available
+- Check the Actions tab for the deployment URL in the workflow summary
 
 ## API Usage
 
@@ -172,8 +187,12 @@ Examples:
 Edit `scripts/fetch_openai_pricing.py`:
 
 ```python
-PRICING_URL = "https://openai.com/api/pricing/"
+PRICING_URL = "https://platform.openai.com/docs/pricing"  # API docs (recommended)
+# OR
+PRICING_URL = "https://openai.com/api/pricing/"  # Marketing page (limited data)
 ```
+
+**Note:** The API docs URL (`platform.openai.com`) contains more comprehensive pricing data (60+ models) compared to the marketing page.
 
 ## Data Structure
 
