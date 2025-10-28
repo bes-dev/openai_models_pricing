@@ -71,15 +71,112 @@ def parse_price(text: str) -> float:
     """Extract price from text like '$2.50', '2.50', etc."""
     if not text:
         return 0.0
-    
+
     # Remove $ and whitespace
     cleaned = re.sub(r'[\$\s,]', '', text)
-    
+
     # Try to extract first number
     match = re.search(r'(\d+\.?\d*)', cleaned)
     if match:
         return float(match.group(1))
     return 0.0
+
+
+def parse_image_resolution_table(table, headers: list, pricing: Dict[str, Any]) -> None:
+    """Parse image resolution pricing tables (e.g., 1024x1024, quality-based)."""
+    print(f"    Parsing image resolution table...")
+
+    # Extract resolution headers (e.g., "1024 x 1024", "1024 x 1536")
+    resolution_indices = {}
+    for idx, header in enumerate(headers):
+        if 'x' in header and any(char.isdigit() for char in header):
+            # Normalize resolution format: "1024 x 1024" -> "1024x1024"
+            resolution = re.sub(r'\s*x\s*', 'x', header)
+            resolution_indices[idx] = resolution
+
+    print(f"    Resolution columns: {resolution_indices}")
+
+    # Get quality column index (if exists)
+    quality_idx = None
+    for idx, header in enumerate(headers):
+        if 'quality' in header:
+            quality_idx = idx
+            break
+
+    rows = table.find_all('tr')[1:]  # Skip header
+
+    current_model = None
+    for row_idx, row in enumerate(rows, 1):
+        cells = row.find_all(['td', 'th'])
+        if len(cells) < 2:
+            continue
+
+        # First cell might be model name or quality
+        first_cell = cells[0].get_text(strip=True)
+
+        # Check if this is a model name (usually longer and contains letters)
+        if len(first_cell) > 3 and any(c.isalpha() for c in first_cell):
+            # Skip header-like names
+            if first_cell.lower() in ['medium', 'high', 'standard', 'hd', 'model', 'quality']:
+                continue
+            # Valid model name
+            current_model = first_cell
+            print(f"    Row {row_idx}: Model = {current_model}")
+
+        # Determine quality
+        quality = 'standard'  # default
+        if quality_idx and quality_idx < len(cells):
+            quality_text = cells[quality_idx].get_text(strip=True).lower()
+            # Only use if it's a valid quality label
+            if quality_text in ['low', 'medium', 'high', 'standard', 'hd']:
+                quality = quality_text
+        elif first_cell.lower() in ['low', 'medium', 'high', 'standard', 'hd']:
+            quality = first_cell.lower()
+
+        # If quality is still default and first_cell is not a model, skip
+        if quality == 'standard' and first_cell.lower() not in ['low', 'medium', 'high', 'standard', 'hd'] and current_model:
+            # Try to find quality in any cell
+            for cell in cells[1:]:
+                cell_text = cell.get_text(strip=True).lower()
+                if cell_text in ['low', 'medium', 'high', 'standard', 'hd']:
+                    quality = cell_text
+                    break
+
+        # Skip if no model identified
+        if not current_model:
+            continue
+
+        # Extract prices for each resolution
+        resolution_prices = {}
+        for idx, resolution in resolution_indices.items():
+            if idx < len(cells):
+                price = parse_price(cells[idx].get_text(strip=True))
+                if price > 0:
+                    resolution_prices[resolution] = price
+
+        if not resolution_prices:
+            continue
+
+        # Normalize model name
+        model_key = current_model.replace(' ', '-').replace('·', '-').lower()
+
+        # Create or update pricing entry
+        if model_key not in pricing:
+            pricing[model_key] = {
+                "model": current_model,
+                "pricing_type": "per_image_resolution",
+                "category": "image_generation_token",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "image_pricing": {}
+            }
+
+        # Add resolution pricing under quality
+        if "image_pricing" not in pricing[model_key]:
+            pricing[model_key]["image_pricing"] = {}
+
+        pricing[model_key]["image_pricing"][quality] = resolution_prices
+
+        print(f"      {quality}: {resolution_prices}")
 
 
 def parse_pricing_html(html: str) -> Dict[str, Any]:
@@ -106,6 +203,12 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
                 headers = [th.get_text(strip=True).lower() for th in first_row.find_all(['th', 'td'])]
 
         print(f"  Headers: {headers}")
+
+        # Check if this is an image resolution pricing table
+        if any('x' in h and any(char.isdigit() for char in h) for h in headers):
+            print(f"  Detected image resolution pricing table")
+            parse_image_resolution_table(table, headers, pricing)
+            continue
 
         # Skip if no relevant headers
         if not any(keyword in ' '.join(headers) for keyword in ['model', 'input', 'output', 'price']):
@@ -222,7 +325,19 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
             has_pricing = any(k in model_data for k in ['input', 'output', 'price', 'cached_input'])
 
             if has_pricing:
-                pricing[model_name] = model_data
+                # Normalize model name for merging
+                model_key = model_name.lower().replace(' ', '-').replace('·', '-')
+
+                # Merge with existing data if present
+                if model_key in pricing:
+                    # Update existing entry (merge fields)
+                    pricing[model_key].update({k: v for k, v in model_data.items() if k not in ['model', 'timestamp']})
+                    # Keep original model name if it's better
+                    if len(model_name) > len(pricing[model_key]['model']):
+                        pricing[model_key]['model'] = model_name
+                else:
+                    pricing[model_key] = model_data
+
                 print(f"    Extracted: {model_data}")
 
     return pricing

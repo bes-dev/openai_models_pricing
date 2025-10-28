@@ -104,7 +104,12 @@ class OpenAIPricingViewer {
             prices.push(this.renderPrice('Cached Input', `$${modelData.cached_input.toFixed(2)} / 1M tokens`));
         }
 
-        // Image models
+        // Image resolution pricing (quality-based)
+        if (modelData.image_pricing !== undefined) {
+            prices.push(this.renderImagePricing(modelData.image_pricing));
+        }
+
+        // Legacy image models
         if (modelData.price_1024x1024 !== undefined) {
             prices.push(this.renderPrice('1024×1024', `$${modelData.price_1024x1024.toFixed(4)}`));
         }
@@ -122,6 +127,26 @@ class OpenAIPricingViewer {
         }
 
         return prices.length > 0 ? prices.join('') : '<div class="price-item">No pricing data</div>';
+    }
+
+    renderImagePricing(imagePricing) {
+        let html = '<div class="image-pricing-section">';
+
+        for (const [quality, resolutions] of Object.entries(imagePricing)) {
+            const qualityLabel = quality.charAt(0).toUpperCase() + quality.slice(1);
+            html += `<div class="image-quality-group">`;
+            html += `<div class="quality-label">${qualityLabel} Quality:</div>`;
+
+            for (const [resolution, price] of Object.entries(resolutions)) {
+                const formattedResolution = resolution.replace('x', '×');
+                html += this.renderPrice(`  ${formattedResolution}`, `$${price.toFixed(4)} / image`);
+            }
+
+            html += `</div>`;
+        }
+
+        html += '</div>';
+        return html;
     }
 
     renderPrice(label, value) {
