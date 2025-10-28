@@ -36,13 +36,19 @@
                 placeholder="Search models (e.g., gpt-4, dall-e)..."
                 class="search-input"
             >
-            <select id="type-filter" class="type-filter">
-                <option value="all">All Types</option>
-                <option value="per_1m_tokens">Language Models</option>
-                <option value="per_image">Image Models</option>
-                <option value="per_second">Video Models</option>
-                <option value="per_minute">Audio Models</option>
-                <option value="per_1k_chars">TTS Models</option>
+            <select id="category-filter" class="category-filter">
+                <option value="all">All Categories</option>
+                <option value="language_model">Language Models</option>
+                <option value="reasoning">Reasoning Models</option>
+                <option value="image_generation_token">Image Gen (Token-based)</option>
+                <option value="image_generation">Image Gen (Per Image)</option>
+                <option value="video_generation">Video Generation</option>
+                <option value="audio_transcription">Audio Transcription</option>
+                <option value="text_to_speech">Text-to-Speech</option>
+                <option value="embeddings">Embeddings</option>
+                <option value="computer_use">Computer Use</option>
+                <option value="storage">Storage</option>
+                <option value="other">Other</option>
             </select>
         </section>
 
@@ -59,7 +65,7 @@
             
             <div class="code-block">
                 <h3>Simple API (recommended)</h3>
-                <code>GET https://&lt;your-github-pages-url&gt;/api.json</code>
+                <code>GET https://bes-dev.github.io/openai_models_pricing/api.json</code>
                 <pre>{
   "models": { ... },
   "timestamp": "2025-01-27T12:00:00Z",
@@ -70,12 +76,12 @@
 
             <div class="code-block">
                 <h3>Full Data</h3>
-                <code>GET https://&lt;your-github-pages-url&gt;/pricing.json</code>
+                <code>GET https://bes-dev.github.io/openai_models_pricing/pricing.json</code>
             </div>
 
             <div class="code-block">
                 <h3>Historical Data (90 days)</h3>
-                <code>GET https://&lt;your-github-pages-url&gt;/history.json</code>
+                <code>GET https://bes-dev.github.io/openai_models_pricing/history.json</code>
             </div>
 
             <div class="code-block">
@@ -95,7 +101,7 @@ fetch('./api.json')
                 <pre>
 import requests
 
-url = 'https://&lt;your-github-pages-url&gt;/api.json'
+url = 'https://bes-dev.github.io/openai_models_pricing/api.json'
 data = requests.get(url).json()
 
 for model_name, model_data in data['models'].items():
@@ -108,7 +114,7 @@ for model_name, model_data in data['models'].items():
             <p>
                 Data updated daily via GitHub Actions.
                 Source code on
-                <a href="https://github.com/your-username/openai_models_pricing" target="_blank">GitHub</a>
+                <a href="https://github.com/bes-dev/openai_models_pricing" target="_blank">GitHub</a>
             </p>
             <p class="disclaimer">
                 Pricing data scraped from OpenAI's official pricing page.

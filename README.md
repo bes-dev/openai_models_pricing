@@ -12,7 +12,7 @@ Automatically updated website with current OpenAI model prices. Data is scraped 
 
 ## Demo
 
-Site available at: `https://<your-username>.github.io/openai_models_pricing/`
+Site available at: **https://bes-dev.github.io/openai_models_pricing/**
 
 ## Project Structure
 
@@ -72,7 +72,7 @@ Fork this repository to your GitHub account.
 ### 5. Check the Result
 
 After the workflow completes successfully:
-- Open `https://<your-username>.github.io/openai_models_pricing/`
+- Open https://bes-dev.github.io/openai_models_pricing/
 - It may take 1-2 minutes for the site to become available
 - Check the Actions tab for the deployment URL in the workflow summary
 
@@ -81,7 +81,7 @@ After the workflow completes successfully:
 ### Simple API (Recommended)
 
 ```bash
-curl https://<your-username>.github.io/openai_models_pricing/api.json
+curl https://bes-dev.github.io/openai_models_pricing/api.json
 ```
 
 Response:
@@ -105,7 +105,7 @@ Response:
 ### JavaScript Example
 
 ```javascript
-fetch('https://<your-username>.github.io/openai_models_pricing/api.json')
+fetch('https://bes-dev.github.io/openai_models_pricing/api.json')
   .then(res => res.json())
   .then(data => {
     console.log('Models:', data.models);
@@ -118,15 +118,22 @@ fetch('https://<your-username>.github.io/openai_models_pricing/api.json')
 ```python
 import requests
 
-url = 'https://<your-username>.github.io/openai_models_pricing/api.json'
+url = 'https://bes-dev.github.io/openai_models_pricing/api.json'
 data = requests.get(url).json()
 
+# Filter by category
 for model_name, model_data in data['models'].items():
-    print(f"{model_name}:")
-    if 'input' in model_data:
-        print(f"  Input: ${model_data['input']}/1M tokens")
-    if 'output' in model_data:
-        print(f"  Output: ${model_data['output']}/1M tokens")
+    if model_data.get('category') == 'image_generation_token':
+        print(f"{model_name} ({model_data['category']}):")
+        print(f"  Input: ${model_data.get('input', 0)}/1M tokens")
+        print(f"  Output: ${model_data.get('output', 0)}/1M tokens")
+        print()
+
+# Or show all models with their categories
+for model_name, model_data in data['models'].items():
+    category = model_data.get('category', 'unknown')
+    pricing_type = model_data.get('pricing_type', 'unknown')
+    print(f"{model_name}: {category} ({pricing_type})")
 ```
 
 ### Available Endpoints
@@ -205,13 +212,23 @@ Full model data:
   "gpt-4o": {
     "model": "gpt-4o",
     "pricing_type": "per_1m_tokens",
+    "category": "language_model",
     "input": 2.5,
     "output": 10.0,
+    "timestamp": "2025-01-27T12:00:00Z"
+  },
+  "gpt-image-1": {
+    "model": "gpt-image-1",
+    "pricing_type": "per_1m_tokens",
+    "category": "image_generation_token",
+    "input": 10.0,
+    "output": 40.0,
     "timestamp": "2025-01-27T12:00:00Z"
   },
   "dall-e-3": {
     "model": "dall-e-3",
     "pricing_type": "per_image",
+    "category": "image_generation",
     "price": 0.04,
     "timestamp": "2025-01-27T12:00:00Z"
   }
@@ -239,14 +256,40 @@ Price change history:
 ]
 ```
 
-## Pricing Types
+## Data Fields
 
-- `per_1m_tokens` - Language models (GPT, o1, o3, embeddings) - price per 1M tokens
-- `per_image` - Image generation (DALL-E) - price per image
-- `per_second` - Video generation (Sora) - price per second
-- `per_minute` - Audio transcription (Whisper) - price per minute
-- `per_1k_chars` - Text-to-speech (TTS) - price per 1K characters
-- `unknown` - Unable to determine pricing type
+Each model in the JSON has the following fields:
+
+- `model` - Model name
+- `pricing_type` - How the model is billed (per_1m_tokens, per_image, per_second, etc.)
+- `category` - Model category (see below)
+- `input` - Input price (for token-based models)
+- `output` - Output price (for token-based models)
+- `cached_input` - Cached input price (if available)
+- `price` - Fixed price (for non-token models)
+- `timestamp` - When the data was last updated
+
+### Pricing Types
+
+- `per_1m_tokens` - Price per 1 million tokens (language, image-gen, embeddings)
+- `per_image` - Price per image (DALL-E)
+- `per_second` - Price per second (Sora video generation)
+- `per_minute` - Price per minute (Whisper audio transcription)
+- `per_1k_chars` - Price per 1K characters (TTS)
+
+### Categories
+
+- `language_model` - GPT-5, GPT-4, GPT-3.5, davinci, babbage
+- `reasoning` - o1-pro, o3-pro, o3-deep-research
+- `image_generation_token` - gpt-image-1 (token-based image generation)
+- `image_generation` - DALL-E (fixed price per image)
+- `video_generation` - Sora models
+- `audio_transcription` - Whisper models
+- `text_to_speech` - TTS models
+- `embeddings` - text-embedding models
+- `computer_use` - Computer use models
+- `storage` - Storage pricing
+- `other` - Other models
 
 ## Notes
 

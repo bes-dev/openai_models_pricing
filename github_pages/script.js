@@ -33,23 +33,23 @@ class OpenAIPricingViewer {
 
     setupEventListeners() {
         const searchInput = document.getElementById('search-input');
-        const typeFilter = document.getElementById('type-filter');
+        const categoryFilter = document.getElementById('category-filter');
 
         searchInput.addEventListener('input', () => this.filterModels());
-        typeFilter.addEventListener('change', () => this.filterModels());
+        categoryFilter.addEventListener('change', () => this.filterModels());
     }
 
     filterModels() {
         const searchTerm = document.getElementById('search-input').value.toLowerCase();
-        const typeFilter = document.getElementById('type-filter').value;
+        const categoryFilter = document.getElementById('category-filter').value;
 
         this.filteredPricing = {};
 
         for (const [modelName, modelData] of Object.entries(this.pricing)) {
             const matchesSearch = modelName.toLowerCase().includes(searchTerm);
-            const matchesType = typeFilter === 'all' || modelData.pricing_type === typeFilter;
+            const matchesCategory = categoryFilter === 'all' || modelData.category === categoryFilter;
 
-            if (matchesSearch && matchesType) {
+            if (matchesSearch && matchesCategory) {
                 this.filteredPricing[modelName] = modelData;
             }
         }
@@ -74,14 +74,14 @@ class OpenAIPricingViewer {
     }
 
     renderModelCard(modelName, modelData) {
-        const typeLabel = this.getPricingTypeLabel(modelData.pricing_type);
+        const categoryLabel = this.getCategoryLabel(modelData.category);
         const pricesHTML = this.renderPrices(modelData);
 
         return `
             <div class="model-card">
                 <div class="model-header">
                     <div class="model-name">${modelName}</div>
-                    <div class="model-type">${typeLabel}</div>
+                    <div class="model-type">${categoryLabel}</div>
                 </div>
                 <div class="model-pricing">
                     ${pricesHTML}
@@ -133,16 +133,22 @@ class OpenAIPricingViewer {
         `;
     }
 
-    getPricingTypeLabel(type) {
+    getCategoryLabel(category) {
         const labels = {
-            'per_1m_tokens': 'Language Model',
-            'per_image': 'Image Generation',
-            'per_minute': 'Audio',
-            'per_second': 'Video',
-            'per_1k_chars': 'Text-to-Speech',
+            'language_model': 'Language Model',
+            'reasoning': 'Reasoning Model',
+            'image_generation_token': 'Image Gen (Token-based)',
+            'image_generation': 'Image Gen (Per Image)',
+            'video_generation': 'Video Generation',
+            'audio_transcription': 'Audio Transcription',
+            'text_to_speech': 'Text-to-Speech',
+            'embeddings': 'Embeddings',
+            'computer_use': 'Computer Use',
+            'storage': 'Storage',
+            'other': 'Other',
             'unknown': 'Unknown'
         };
-        return labels[type] || type;
+        return labels[category] || category;
     }
 
     getPriceUnit(type) {

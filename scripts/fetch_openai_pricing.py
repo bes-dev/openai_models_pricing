@@ -137,6 +137,7 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
             model_data = {
                 "model": model_name,
                 "pricing_type": "unknown",
+                "category": "unknown",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -169,15 +170,16 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
                 elif 'price' in header and price > 0:
                     model_data['price'] = price
 
-            # Determine pricing type from model name if not already set
-            if model_data['pricing_type'] == 'unknown' and 'price' in model_data:
-                model_name_lower = model_name.lower()
+            # Determine pricing type and category from model name if not already set
+            model_name_lower = model_name.lower()
 
+            # Determine pricing type if still unknown
+            if model_data['pricing_type'] == 'unknown' and 'price' in model_data:
                 # GPT models (language)
-                if any(x in model_name_lower for x in ['gpt', 'o1', 'o3']):
+                if any(x in model_name_lower for x in ['gpt', 'o1', 'o3', 'o4']):
                     model_data['pricing_type'] = 'per_1m_tokens'
                 # Image generation models
-                elif any(x in model_name_lower for x in ['dall-e', 'dall·e', 'image']):
+                elif any(x in model_name_lower for x in ['dall-e', 'dall·e']):
                     model_data['pricing_type'] = 'per_image'
                 # Video models
                 elif 'sora' in model_name_lower:
@@ -191,6 +193,30 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
                 # Embeddings
                 elif 'embedding' in model_name_lower:
                     model_data['pricing_type'] = 'per_1m_tokens'
+
+            # Determine category based on model characteristics
+            if 'gpt-image' in model_name_lower:
+                model_data['category'] = 'image_generation_token'
+            elif any(x in model_name_lower for x in ['dall-e', 'dall·e']):
+                model_data['category'] = 'image_generation'
+            elif 'sora' in model_name_lower:
+                model_data['category'] = 'video_generation'
+            elif 'whisper' in model_name_lower:
+                model_data['category'] = 'audio_transcription'
+            elif 'tts' in model_name_lower:
+                model_data['category'] = 'text_to_speech'
+            elif 'embedding' in model_name_lower:
+                model_data['category'] = 'embeddings'
+            elif any(x in model_name_lower for x in ['o1', 'o3', 'o4']) and 'mini' not in model_name_lower:
+                model_data['category'] = 'reasoning'
+            elif any(x in model_name_lower for x in ['gpt-5', 'gpt-4', 'gpt-3.5', 'davinci', 'babbage']):
+                model_data['category'] = 'language_model'
+            elif 'computer-use' in model_name_lower:
+                model_data['category'] = 'computer_use'
+            elif 'storage' in model_name_lower:
+                model_data['category'] = 'storage'
+            else:
+                model_data['category'] = 'other'
 
             # Only add if has meaningful pricing data
             has_pricing = any(k in model_data for k in ['input', 'output', 'price', 'cached_input'])
