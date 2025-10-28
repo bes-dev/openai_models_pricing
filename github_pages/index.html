@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Models Pricing</title>
+    <meta name="description" content="Real-time OpenAI API pricing data for all models">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>OpenAI Models Pricing</h1>
+            <p class="subtitle">Real-time pricing data from OpenAI official website</p>
+        </header>
+
+        <section class="stats-section">
+            <div class="stat-card">
+                <div class="stat-label">Total Models</div>
+                <div class="stat-value" id="models-count">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Updated</div>
+                <div class="stat-value" id="last-updated">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Data Source</div>
+                <div class="stat-value">OpenAI</div>
+            </div>
+        </section>
+
+        <section class="filters-section">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search models (e.g., gpt-4, dall-e)..."
+                class="search-input"
+            >
+            <select id="type-filter" class="type-filter">
+                <option value="all">All Types</option>
+                <option value="per_1m_tokens">Language Models</option>
+                <option value="per_image">Image Models</option>
+                <option value="per_second">Video Models</option>
+                <option value="per_minute">Audio Models</option>
+                <option value="per_1k_chars">TTS Models</option>
+            </select>
+        </section>
+
+        <section class="models-section">
+            <h2>Models List</h2>
+            <div id="models-container" class="models-container">
+                <div class="loading">Loading pricing data...</div>
+            </div>
+        </section>
+
+        <section class="api-section">
+            <h2>API Usage</h2>
+            <p>Access pricing data via JSON API:</p>
+            
+            <div class="code-block">
+                <h3>Simple API (recommended)</h3>
+                <code>GET https://&lt;your-github-pages-url&gt;/api.json</code>
+                <pre>{
+  "models": { ... },
+  "timestamp": "2025-01-27T12:00:00Z",
+  "models_count": 20,
+  "source": "openai_official_pricing_page"
+}</pre>
+            </div>
+
+            <div class="code-block">
+                <h3>Full Data</h3>
+                <code>GET https://&lt;your-github-pages-url&gt;/pricing.json</code>
+            </div>
+
+            <div class="code-block">
+                <h3>Historical Data (90 days)</h3>
+                <code>GET https://&lt;your-github-pages-url&gt;/history.json</code>
+            </div>
+
+            <div class="code-block">
+                <h3>JavaScript Example</h3>
+                <pre>
+fetch('./api.json')
+  .then(res => res.json())
+  .then(data => {
+    console.log('Models:', data.models);
+    console.log('Updated:', data.timestamp);
+  });
+                </pre>
+            </div>
+
+            <div class="code-block">
+                <h3>Python Example</h3>
+                <pre>
+import requests
+
+url = 'https://&lt;your-github-pages-url&gt;/api.json'
+data = requests.get(url).json()
+
+for model_name, model_data in data['models'].items():
+    print(f"{model_name}: {model_data}")
+                </pre>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>
+                Data updated daily via GitHub Actions.
+                Source code on
+                <a href="https://github.com/your-username/openai_models_pricing" target="_blank">GitHub</a>
+            </p>
+            <p class="disclaimer">
+                Pricing data scraped from OpenAI's official pricing page.
+                Always verify prices on <a href="https://openai.com/api/pricing/" target="_blank">openai.com</a> before making decisions.
+            </p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

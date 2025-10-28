@@ -1,0 +1,63 @@
+name: Update OpenAI Pricing
+
+on:
+  push:
+    branches: [ master, main ]
+  schedule:
+    - cron: '0 12 * * *'  # Run daily at 12:00 UTC
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  update-pricing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Create github_pages directory
+        run: mkdir -p github_pages
+      
+      - name: Fetch OpenAI pricing
+        run: |
+          python scripts/fetch_openai_pricing.py
+      
+      - name: List generated files
+        run: |
+          echo "=== Generated files ==="
+          ls -lah github_pages/
+          echo ""
+          echo "=== pricing.json preview ==="
+          head -n 30 github_pages/pricing.json || echo "No pricing.json"
+          echo ""
+          echo "=== api.json preview ==="
+          head -n 30 github_pages/api.json || echo "No api.json"
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: github_pages
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

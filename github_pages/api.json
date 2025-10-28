@@ -1,0 +1,26 @@
+{
+  "models": {
+    "sora-2": {
+      "model": "sora-2",
+      "pricing_type": "per_second",
+      "timestamp": "2025-10-28T10:41:22.435181+00:00",
+      "price": 0.1
+    },
+    "sora-2-pro": {
+      "model": "sora-2-pro",
+      "pricing_type": "per_second",
+      "timestamp": "2025-10-28T10:41:22.435582+00:00",
+      "price": 0.5
+    },
+    "512 × 512 tiles": {
+      "model": "512 × 512 tiles",
+      "pricing_type": "unknown",
+      "timestamp": "2025-10-28T10:41:22.435698+00:00",
+      "price": 512.0
+    }
+  },
+  "timestamp": "2025-10-28T10:41:22.436057+00:00",
+  "last_updated": "2025-10-28T10:41:22.436057+00:00",
+  "models_count": 3,
+  "source": "openai_official_pricing_page"
+}
