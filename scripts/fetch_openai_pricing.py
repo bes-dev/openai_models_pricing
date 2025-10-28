@@ -114,33 +114,27 @@ def parse_image_resolution_table(table, headers: list, pricing: Dict[str, Any]) 
         # First cell might be model name or quality
         first_cell = cells[0].get_text(strip=True)
 
-        # Check if this is a model name (usually longer and contains letters)
-        if len(first_cell) > 3 and any(c.isalpha() for c in first_cell):
+        # Check if this is a quality label
+        if first_cell.lower() in ['low', 'medium', 'high', 'standard', 'hd']:
+            quality = first_cell.lower()
+        # Check if this is a model name
+        elif len(first_cell) > 3 and any(c.isalpha() for c in first_cell):
             # Skip header-like names
-            if first_cell.lower() in ['medium', 'high', 'standard', 'hd', 'model', 'quality']:
+            if first_cell.lower() in ['model', 'quality']:
                 continue
             # Valid model name
             current_model = first_cell
             print(f"    Row {row_idx}: Model = {current_model}")
+            quality = 'standard'  # default quality for new model
+        else:
+            quality = 'standard'  # default
 
-        # Determine quality
-        quality = 'standard'  # default
+        # Try to find quality in dedicated column if exists
         if quality_idx and quality_idx < len(cells):
             quality_text = cells[quality_idx].get_text(strip=True).lower()
             # Only use if it's a valid quality label
             if quality_text in ['low', 'medium', 'high', 'standard', 'hd']:
                 quality = quality_text
-        elif first_cell.lower() in ['low', 'medium', 'high', 'standard', 'hd']:
-            quality = first_cell.lower()
-
-        # If quality is still default and first_cell is not a model, skip
-        if quality == 'standard' and first_cell.lower() not in ['low', 'medium', 'high', 'standard', 'hd'] and current_model:
-            # Try to find quality in any cell
-            for cell in cells[1:]:
-                cell_text = cell.get_text(strip=True).lower()
-                if cell_text in ['low', 'medium', 'high', 'standard', 'hd']:
-                    quality = cell_text
-                    break
 
         # Skip if no model identified
         if not current_model:

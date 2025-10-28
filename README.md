@@ -291,6 +291,226 @@ Each model in the JSON has the following fields:
 - `storage` - Storage pricing
 - `other` - Other models
 
+## How to Calculate Costs
+
+This section explains how to use the pricing data to calculate the cost of using different OpenAI models.
+
+### Understanding Tokens
+
+**What is a token?** A token is the basic unit of text processing in OpenAI models. It can be a word, subword, punctuation mark, or symbol.
+
+**Rule of thumb:**
+- 1 token ≈ 4 characters of English text
+- 1,000 tokens ≈ 750 English words
+- 100 tokens ≈ 75 words
+
+**Example:** The sentence "Hello, how are you today?" contains approximately 6-7 tokens.
+
+### Cost Calculation Formulas
+
+#### 1. Language Models (per_1m_tokens)
+
+Models: GPT-4, GPT-3.5, o1, embeddings, etc.
+
+**Formula:**
+```
+Total Cost = (Input Tokens / 1,000,000 × Input Price) + (Output Tokens / 1,000,000 × Output Price)
+```
+
+**Example with GPT-4o:**
+- Input price: $2.50 / 1M tokens
+- Output price: $10.00 / 1M tokens
+- Your request: 500 input tokens, 1,500 output tokens
+
+```
+Cost = (500 / 1,000,000 × $2.50) + (1,500 / 1,000,000 × $10.00)
+     = $0.00125 + $0.015
+     = $0.01625 (≈ $0.016)
+```
+
+**With cached input:**
+```
+Total Cost = (Cached Input / 1,000,000 × Cached Price) + (New Input / 1,000,000 × Input Price) + (Output / 1,000,000 × Output Price)
+```
+
+#### 2. Image Generation - Token-based (image_generation_token)
+
+Models: gpt-image-1, gpt-image-1-mini
+
+These models have **two pricing components**:
+
+**A) Text tokens (for your prompt):**
+```
+Text Cost = (Input Tokens / 1,000,000 × Input Price) + (Output Tokens / 1,000,000 × Output Price)
+```
+
+**B) Image generation (per image by resolution and quality):**
+```
+Image Cost = Number of Images × Price per Image (from image_pricing)
+```
+
+**Example with gpt-image-1:**
+- Input: $10.00 / 1M tokens
+- Output: $40.00 / 1M tokens
+- Image (low quality, 1024x1024): $0.011 / image
+
+Generate 1 image with prompt "A beautiful sunset over mountains" (≈10 tokens input, ≈50 tokens output):
+
+```
+Text Cost = (10 / 1,000,000 × $10.00) + (50 / 1,000,000 × $40.00)
+          = $0.0001 + $0.002 = $0.0021
+
+Image Cost = 1 × $0.011 = $0.011
+
+Total Cost = $0.0021 + $0.011 = $0.0131 (≈ $0.013)
+```
+
+**Quality comparison** (1 image, 1024x1024):
+- Low quality: $0.011 per image
+- Medium quality: $0.063 per image (5.7× more expensive)
+- High quality: $0.25 per image (23× more expensive)
+
+**Resolution comparison** (low quality):
+- 1024x1024: $0.011
+- 1024x1536: $0.016 (45% more expensive)
+- 1536x1024: $0.016 (45% more expensive)
+
+#### 3. Image Generation - Fixed Price (image_generation)
+
+Models: DALL-E 3, DALL-E 2
+
+**Formula:**
+```
+Total Cost = Number of Images × Price per Resolution
+```
+
+**Example with DALL-E 3:**
+- 1024x1024: $0.12 per image
+- 1024x1536: $0.12 per image
+
+```
+Cost for 5 images (1024x1024) = 5 × $0.12 = $0.60
+```
+
+#### 4. Audio Transcription (audio_transcription)
+
+Models: Whisper
+
+**Formula:**
+```
+Total Cost = Audio Duration (minutes) × Price per Minute
+```
+
+**Example:**
+- Price: $0.006 / minute
+- Audio: 15 minutes
+
+```
+Cost = 15 × $0.006 = $0.09
+```
+
+#### 5. Text-to-Speech (text_to_speech)
+
+Models: TTS
+
+**Formula:**
+```
+Total Cost = (Characters / 1,000) × Price per 1K Characters
+```
+
+**Example:**
+- Price: $0.015 / 1K characters
+- Text: 5,000 characters
+
+```
+Cost = (5,000 / 1,000) × $0.015 = $0.075
+```
+
+#### 6. Video Generation (video_generation)
+
+Models: Sora
+
+**Formula:**
+```
+Total Cost = Duration (seconds) × Price per Second
+```
+
+**Example:**
+- Price: $0.05 / second
+- Video: 30 seconds
+
+```
+Cost = 30 × $0.05 = $1.50
+```
+
+### Practical Tips
+
+1. **Use the tiktoken library** to count tokens accurately before making API calls:
+   ```python
+   import tiktoken
+
+   encoding = tiktoken.encoding_for_model("gpt-4o")
+   tokens = encoding.encode("Your text here")
+   token_count = len(tokens)
+   ```
+
+2. **Monitor your usage** in the OpenAI dashboard to track actual token consumption.
+
+3. **Optimize costs:**
+   - Use lower-quality image generation when high quality isn't needed
+   - Use smaller models (e.g., GPT-3.5 instead of GPT-4) for simpler tasks
+   - Cache frequently used prompts to benefit from cached input pricing
+   - Keep prompts concise to reduce input token count
+
+4. **Estimate before production:**
+   - Test with small samples to measure actual token usage
+   - Account for system messages and API formatting overhead
+   - Add 10-20% buffer for unexpected token usage
+
+5. **Image token consumption varies:**
+   - Low quality: ~85 tokens per image
+   - Medium quality: ~300-400 tokens per image
+   - High quality: ~765 tokens per image
+
+### Cost Comparison Example
+
+Generate 100 images with text prompt (1024x1024):
+
+| Model | Quality | Text Cost | Image Cost | Total Cost |
+|-------|---------|-----------|------------|------------|
+| gpt-image-1-mini | Low | $0.11 | $0.50 | **$0.61** |
+| gpt-image-1 | Low | $0.21 | $1.10 | **$1.31** |
+| gpt-image-1-mini | Medium | $0.11 | $1.50 | **$1.61** |
+| DALL-E 2 | Standard | $0 | $1.60 | **$1.60** |
+| gpt-image-1-mini | High | $0.11 | $5.20 | **$5.31** |
+| gpt-image-1 | Medium | $0.21 | $6.30 | **$6.51** |
+| DALL-E 3 | Standard | $0 | $12.00 | **$12.00** |
+| gpt-image-1 | High | $0.21 | $25.00 | **$25.21** |
+
+*Assumes 1,000 input tokens and 5,000 output tokens for text processing.*
+
+### Automated Cost Calculator
+
+For automated cost calculation, see the example script: [`examples/cost_calculator.py`](examples/cost_calculator.py)
+
+This Python script provides a `OpenAICostCalculator` class that:
+- Loads pricing data from the API automatically
+- Calculates costs for different model types
+- Provides helper methods for all pricing models
+- Includes working examples
+
+Run it:
+```bash
+python examples/cost_calculator.py
+```
+
+### Additional Resources
+
+- **Official Pricing Page:** https://openai.com/api/pricing/
+- **OpenAI Documentation:** https://platform.openai.com/docs/
+- **Tokenizer Tool:** https://platform.openai.com/tokenizer
+- **tiktoken Library:** https://github.com/openai/tiktoken
+
 ## Notes
 
 - Data is scraped from the official OpenAI pricing page
