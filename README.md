@@ -1,39 +1,117 @@
 # OpenAI Models Pricing
 
-Automatically updated website with current OpenAI model prices. Data is scraped daily from the official OpenAI website and published on GitHub Pages.
+**Comprehensive OpenAI pricing solution with automated data updates and Python library for cost calculation.**
 
-## Features
+This project provides two integrated components:
 
+1. **Pricing Data Provider** - Automatically scrapes and publishes OpenAI pricing data via JSON API
+2. **Python Library** (`openai-pricing`) - Clean API for calculating costs and tracking usage
+
+## 🎯 Features
+
+### Pricing Data Provider
 - Daily automatic price updates via GitHub Actions
 - JSON API for integration into your projects
 - Web interface for browsing prices
 - Price history for the last 90 days
 - Search and filter models
 
+### Python Library
+- Simple and clean API for cost calculation
+- Support for all OpenAI model types (GPT, DALL-E, Whisper, Sora)
+- Automatic pricing updates with local caching
+- Credit-based billing support
+- Variance tracking (estimated vs actual costs)
+- Mixed usage calculation across multiple models
+- Zero dependencies (only Pydantic required)
+
 ## Demo
 
-Site available at: **https://bes-dev.github.io/openai_models_pricing/**
+Site available at: **https://bes-dev.github.io/openai-pricing/**
 
-## Project Structure
+## 📦 Quick Start - Python Library
+
+Install the library:
+
+```bash
+pip install openai-pricing
+```
+
+Calculate costs:
+
+```python
+from openai_pricing import PricingCalculator
+
+calculator = PricingCalculator()
+
+# Calculate cost for GPT-4o
+cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=1000,
+    output_tokens=500
+)
+print(f"Cost: ${cost:.4f}")  # Cost: $0.0125
+
+# Calculate cost for DALL-E-3
+cost = calculator.calculate_image_cost(
+    "dall-e-3",
+    count=5,
+    size="1024x1024",
+    quality="hd"
+)
+print(f"Cost: ${cost:.4f}")  # Cost: $0.4000
+
+# Mixed usage (multiple models)
+usage = {
+    "analyze": {"model": "gpt-4o", "input_tokens": 1000, "output_tokens": 500},
+    "generate": {"model": "dall-e-3", "count": 5, "size": "1024x1024"}
+}
+total = calculator.calculate_mixed_usage(usage)
+print(f"Total: ${total:.4f}")
+```
+
+For complete library documentation, see [Python Library Usage](#-python-library-usage) section.
+
+## 📁 Project Structure
 
 ```
-openai_models_pricing/
-├── .github/
-│   └── workflows/
-│       └── update-pricing.yml    # GitHub Actions workflow
-├── github_pages/                  # GitHub Pages site
-│   ├── index.html                # Main page
-│   ├── script.js                 # JavaScript for data display
-│   ├── styles.css                # Styles
-│   ├── api.json                  # Simplified API (generated)
-│   ├── pricing.json              # Full data (generated)
-│   └── history.json              # Price history (generated)
+openai-pricing/
+├── .github/workflows/
+│   ├── update-pricing.yml         # Daily pricing updates
+│   ├── publish-pypi.yml           # PyPI publishing (WIP)
+│   └── tests.yml                  # Library tests (WIP)
+├── github_pages/                   # GitHub Pages site
+│   ├── index.html                 # Web interface
+│   ├── script.js                  # Frontend JavaScript
+│   ├── styles.css                 # Styling
+│   ├── api.json                   # Simplified API (generated)
+│   ├── pricing.json               # Full data (generated)
+│   └── history.json               # Price history (generated)
 ├── scripts/
-│   └── fetch_openai_pricing.py   # Price scraping script
-└── requirements.txt               # Python dependencies
+│   └── fetch_openai_pricing.py    # Price scraping script
+├── src/openai_pricing/             # Python library source
+│   ├── __init__.py
+│   ├── calculator.py              # Main calculator class
+│   ├── pricing.py                 # Pricing data provider
+│   └── models.py                  # Pydantic data models
+├── examples/
+│   ├── basic_usage.py             # Library usage examples
+│   └── README.md                  # Examples documentation
+├── pyproject.toml                 # Python package configuration
+└── requirements.txt               # Scraper dependencies
 ```
 
-## Quick Start
+## 🚀 Quick Start
+
+### Option 1: Use Python Library (Recommended)
+
+```bash
+pip install openai-pricing
+```
+
+See [Python Library Usage](#-python-library-usage) for full documentation.
+
+### Option 2: Fork Repository for Custom Data Provider
 
 ### 1. Fork the Repository
 
@@ -72,7 +150,7 @@ Fork this repository to your GitHub account.
 ### 5. Check the Result
 
 After the workflow completes successfully:
-- Open https://bes-dev.github.io/openai_models_pricing/
+- Open https://bes-dev.github.io/openai-pricing/
 - It may take 1-2 minutes for the site to become available
 - Check the Actions tab for the deployment URL in the workflow summary
 
@@ -81,7 +159,7 @@ After the workflow completes successfully:
 ### Simple API (Recommended)
 
 ```bash
-curl https://bes-dev.github.io/openai_models_pricing/api.json
+curl https://bes-dev.github.io/openai-pricing/api.json
 ```
 
 Response:
@@ -105,7 +183,7 @@ Response:
 ### JavaScript Example
 
 ```javascript
-fetch('https://bes-dev.github.io/openai_models_pricing/api.json')
+fetch('https://bes-dev.github.io/openai-pricing/api.json')
   .then(res => res.json())
   .then(data => {
     console.log('Models:', data.models);
@@ -118,7 +196,7 @@ fetch('https://bes-dev.github.io/openai_models_pricing/api.json')
 ```python
 import requests
 
-url = 'https://bes-dev.github.io/openai_models_pricing/api.json'
+url = 'https://bes-dev.github.io/openai-pricing/api.json'
 data = requests.get(url).json()
 
 # Filter by category
@@ -291,7 +369,329 @@ Each model in the JSON has the following fields:
 - `storage` - Storage pricing
 - `other` - Other models
 
-## How to Calculate Costs
+---
+
+## 📚 Python Library Usage
+
+The `openai-pricing` Python library provides a clean API for calculating costs across all OpenAI model types.
+
+### Installation
+
+```bash
+# From PyPI
+pip install openai-pricing
+
+# From source (for development)
+git clone https://github.com/bes-dev/openai-pricing.git
+cd openai-pricing
+pip install -e .
+```
+
+### Basic Usage
+
+```python
+from openai_pricing import PricingCalculator
+
+calculator = PricingCalculator()
+```
+
+### API Reference
+
+#### `calculate_token_cost(model, input_tokens=0, output_tokens=0, cached_tokens=0)`
+
+Calculate cost for token-based models (GPT-4, GPT-3.5, embeddings, etc.).
+
+```python
+# GPT-4o
+cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=1000,
+    output_tokens=500
+)
+print(f"${cost:.4f}")  # $0.0125
+
+# With cached tokens
+cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=500,
+    output_tokens=500,
+    cached_tokens=500  # 90% cheaper
+)
+```
+
+#### `calculate_image_cost(model, count=1, size="1024x1024", quality="standard")`
+
+Calculate cost for image generation (DALL-E, gpt-image-1).
+
+```python
+# DALL-E-3
+cost = calculator.calculate_image_cost(
+    "dall-e-3",
+    count=5,
+    size="1024x1024",
+    quality="hd"
+)
+print(f"${cost:.4f}")  # $0.4000
+
+# gpt-image-1
+cost = calculator.calculate_image_cost(
+    "gpt-image-1",
+    count=10,
+    size="1024x1024",
+    quality="low"
+)
+```
+
+#### `calculate_video_cost(model, duration_seconds)`
+
+Calculate cost for video generation (Sora).
+
+```python
+cost = calculator.calculate_video_cost(
+    "sora-2",
+    duration_seconds=30
+)
+```
+
+#### `calculate_mixed_usage(usage)`
+
+Calculate total cost from multiple models and stages.
+
+```python
+usage = {
+    "analysis": {
+        "model": "gpt-4o",
+        "input_tokens": 1000,
+        "output_tokens": 500
+    },
+    "generation": {
+        "model": "gpt-4o",
+        "input_tokens": 2000,
+        "output_tokens": 800
+    },
+    "images": {
+        "model": "dall-e-3",
+        "count": 5,
+        "size": "1024x1024",
+        "quality": "standard"
+    }
+}
+
+total = calculator.calculate_mixed_usage(usage)
+print(f"Total: ${total:.4f}")
+```
+
+#### `estimate_credits(items, overhead, per_item, currency="credits")`
+
+Estimate cost in credits or custom units.
+
+```python
+estimate = calculator.estimate_credits(
+    items=10,           # Number of items
+    overhead=3,         # Fixed overhead
+    per_item=2,         # Cost per item
+    currency="credits"
+)
+
+print(f"Total: {estimate.total} {estimate.currency}")  # Total: 23 credits
+print(f"Breakdown: {estimate.overhead} + ({estimate.items} × {estimate.per_item})")
+```
+
+#### `calculate_actual_cost(estimated, usage)`
+
+Calculate actual cost and compare with estimate (variance tracking).
+
+```python
+# Charge user 23 credits (estimated)
+estimated_usd = 23 * 0.05  # Convert to USD
+
+# After generation, calculate actual cost
+actual = calculator.calculate_actual_cost(
+    estimated=estimated_usd,
+    usage={
+        "stage1": {"model": "gpt-4o", "input_tokens": 1000, "output_tokens": 500},
+        "stage2": {"model": "dall-e-3", "count": 5}
+    }
+)
+
+print(f"Estimated: ${actual.estimated:.4f}")
+print(f"Actual: ${actual.actual:.4f}")
+print(f"Variance: {actual.variance_percent:+.1f}%")
+print(f"Is over budget: {actual.is_over_budget}")
+print(f"Savings/Loss: ${actual.savings:.4f}")
+```
+
+#### `get_model_pricing(model)`
+
+Get pricing information for a specific model.
+
+```python
+pricing = calculator.get_model_pricing("gpt-4o")
+
+if pricing:
+    print(f"Model: {pricing.model}")
+    print(f"Type: {pricing.pricing_type}")
+    print(f"Input: ${pricing.input_price}/1M tokens")
+    print(f"Output: ${pricing.output_price}/1M tokens")
+    if pricing.cached_input_price:
+        print(f"Cached: ${pricing.cached_input_price}/1M tokens")
+```
+
+#### `get_available_models()`
+
+Get list of all available models.
+
+```python
+models = calculator.get_available_models()
+print(f"Available models: {len(models)}")
+print(models[:5])  # ['gpt-4o', 'gpt-5', 'dall-e-3', ...]
+```
+
+#### `refresh_pricing()`
+
+Force refresh pricing data from API.
+
+```python
+success = calculator.refresh_pricing()
+if success:
+    print("Pricing data refreshed successfully")
+```
+
+### Configuration
+
+#### Custom API URL
+
+```python
+calculator = PricingCalculator(
+    api_url="https://your-custom-api.com/pricing.json"
+)
+```
+
+#### Custom Cache Location
+
+```python
+from pathlib import Path
+
+calculator = PricingCalculator(
+    cache_file=Path("/custom/path/pricing_cache.json")
+)
+```
+
+#### Custom Cache Duration
+
+```python
+from datetime import timedelta
+
+calculator = PricingCalculator(
+    cache_duration=timedelta(hours=24)  # Cache for 24 hours
+)
+```
+
+### Data Models
+
+#### `CostEstimate`
+
+```python
+class CostEstimate:
+    items: int              # Number of items
+    overhead: float         # Fixed overhead
+    per_item: float         # Cost per item
+    total: float            # Total cost
+    currency: str           # Currency unit
+```
+
+#### `ActualCost`
+
+```python
+class ActualCost:
+    estimated: float        # Estimated cost
+    actual: float           # Actual cost
+    variance_percent: float # Variance percentage
+    is_over_budget: bool    # True if over budget
+    savings: float          # Savings (negative if over)
+    details: dict           # Detailed breakdown
+```
+
+#### `ModelPricing`
+
+```python
+class ModelPricing:
+    model: str                    # Model identifier
+    pricing_type: str             # Type of pricing
+    input_price: Optional[float]  # Input price per 1M tokens
+    output_price: Optional[float] # Output price per 1M tokens
+    cached_input_price: Optional[float]
+    image_pricing: Optional[dict] # Image pricing by size/quality
+    video_price_per_second: Optional[float]
+    source: str                   # Data source
+```
+
+### Examples
+
+Complete examples are available in the [`examples/`](examples/) directory:
+
+```bash
+python examples/basic_usage.py
+```
+
+This will demonstrate:
+1. Token-based cost calculation
+2. Image generation cost
+3. Mixed usage calculation
+4. Credit-based billing
+5. Variance tracking
+6. Model information retrieval
+
+### Error Handling
+
+The library raises `ValueError` for invalid inputs:
+
+```python
+try:
+    cost = calculator.calculate_token_cost("invalid-model", input_tokens=1000)
+except ValueError as e:
+    print(f"Error: {e}")  # Error: Model not found: invalid-model
+```
+
+### Caching
+
+The library automatically caches pricing data:
+- **Location**: `~/.openai_pricing/pricing_cache.json`
+- **Duration**: 12 hours (configurable)
+- **Fallback**: Uses cached data if API is unavailable
+- **Update**: Automatically refreshes expired cache
+
+To force refresh:
+
+```python
+calculator.refresh_pricing()
+```
+
+### Integration with tiktoken
+
+For accurate token counting:
+
+```python
+import tiktoken
+from openai_pricing import PricingCalculator
+
+# Count tokens
+encoding = tiktoken.encoding_for_model("gpt-4o")
+input_tokens = len(encoding.encode("Your input text"))
+output_tokens = len(encoding.encode("Model response"))
+
+# Calculate cost
+calculator = PricingCalculator()
+cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=input_tokens,
+    output_tokens=output_tokens
+)
+```
+
+---
+
+## How to Calculate Costs (Manual Method)
 
 This section explains how to use the pricing data to calculate the cost of using different OpenAI models.
 
@@ -491,17 +891,17 @@ Generate 100 images with text prompt (1024x1024):
 
 ### Automated Cost Calculator
 
-For automated cost calculation, see the example script: [`examples/cost_calculator.py`](examples/cost_calculator.py)
+For automated cost calculation, use the `openai-pricing` Python library:
 
-This Python script provides a `OpenAICostCalculator` class that:
-- Loads pricing data from the API automatically
-- Calculates costs for different model types
-- Provides helper methods for all pricing models
-- Includes working examples
-
-Run it:
 ```bash
-python examples/cost_calculator.py
+pip install openai-pricing
+```
+
+See the [Python Library Usage](#-python-library-usage) section for complete documentation.
+
+Or run the examples:
+```bash
+python examples/basic_usage.py
 ```
 
 ### Additional Resources

@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openai-pricing"
+version = "0.1.0"
+description = "Simple and clean API for OpenAI model cost calculation and tracking with automatic pricing updates"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "bes-dev", email = "bes.dev@gmail.com"},
+]
+keywords = [
+    "openai",
+    "pricing",
+    "cost",
+    "billing",
+    "gpt",
+    "dall-e",
+    "llm",
+    "ai",
+    "cost-tracking",
+    "api-pricing",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "black>=23.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bes-dev/openai-pricing"
+Documentation = "https://github.com/bes-dev/openai-pricing#readme"
+Repository = "https://github.com/bes-dev/openai-pricing"
+Issues = "https://github.com/bes-dev/openai-pricing/issues"
+"Pricing API" = "https://bes-dev.github.io/openai-pricing/"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openai_pricing"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true

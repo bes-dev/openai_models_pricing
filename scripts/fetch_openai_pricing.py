@@ -21,8 +21,7 @@ HISTORY_FILE = "github_pages/history.json"
 
 def fetch_html(url: str) -> str:
     """
-    Fetch HTML content using Playwright.
-    Based on fetch_html_sync from /Users/sergei/work/ai_sticker/scripts/fetch_html.py
+    Fetch HTML content using Playwright with proper JavaScript rendering.
     """
     print(f"Fetching {url} with Playwright...")
 

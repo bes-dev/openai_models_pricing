@@ -1,114 +1,139 @@
-# Cost Calculator Examples
+# OpenAI Pricing - Examples
 
-This directory contains example scripts demonstrating how to use the OpenAI pricing data.
+This directory contains usage examples for the `openai-pricing` Python library.
 
-## cost_calculator.py
+## 📦 Installation
 
-A comprehensive cost calculator for OpenAI API usage.
-
-### Features
-
-- **Automatic pricing updates**: Loads latest pricing from API or local file
-- **Multiple model types**: Supports language models, image generation, audio, video, and more
-- **Detailed cost breakdown**: Shows separate costs for input, output, cached tokens, and images
-- **Real-world examples**: Includes practical usage examples for all model types
-
-### Installation
+Before running examples, install the library:
 
 ```bash
-# Install required dependencies
-pip install requests
+# From PyPI (after release)
+pip install openai-pricing
 
-# For token counting (optional)
-pip install tiktoken
+# From source (for development)
+cd ..
+pip install -e .
 ```
 
-### Usage
+## 📖 Available Examples
 
-#### Basic Usage
+### `basic_usage.py`
+
+Comprehensive examples demonstrating all library features:
+
+1. **Token-based cost calculation** - Calculate costs for GPT models
+2. **Image generation cost** - Calculate costs for DALL-E and image models
+3. **Mixed usage** - Calculate costs across multiple models and stages
+4. **Credit-based billing** - Estimate costs in custom credit units
+5. **Variance tracking** - Compare estimated vs actual costs
+6. **Model information** - Get pricing details for specific models
+
+Run with:
 
 ```bash
-python cost_calculator.py
+python basic_usage.py
 ```
 
-This will run all examples and show cost calculations for different models.
+## 🚀 Quick Start
 
-#### Using in Your Code
+### Calculate Token Cost
 
 ```python
-from cost_calculator import OpenAICostCalculator
+from openai_pricing import PricingCalculator
 
-# Initialize calculator
-calculator = OpenAICostCalculator()
+calculator = PricingCalculator()
 
 # Calculate cost for GPT-4o
-result = calculator.calculate_language_model_cost(
-    model_name="gpt-4o",
-    input_tokens=500,
-    output_tokens=1500
-)
-print(f"Total cost: ${result['total_cost']:.6f}")
-
-# Calculate cost for image generation
-result = calculator.calculate_image_generation_cost(
-    model_name="gpt-image-1",
-    num_images=10,
-    resolution="1024x1024",
-    quality="low",
-    input_tokens=100,
+cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=1000,
     output_tokens=500
 )
-print(f"Total cost: ${result['total_cost']:.6f}")
+print(f"Cost: ${cost:.4f}")
 ```
 
-### API Reference
+### Calculate Image Cost
 
-#### OpenAICostCalculator
-
-Main class for calculating costs.
-
-**Methods:**
-
-- `get_model_pricing(model_name)` - Get pricing data for a specific model
-- `calculate_language_model_cost(model_name, input_tokens, output_tokens, cached_input_tokens=0)` - Calculate cost for language models (GPT-4, GPT-3.5, etc.)
-- `calculate_image_generation_cost(model_name, num_images=1, resolution="1024x1024", quality="low", input_tokens=0, output_tokens=0)` - Calculate cost for token-based image generation (gpt-image-1)
-- `calculate_dalle_cost(model_name, num_images=1, resolution="1024x1024", quality="standard")` - Calculate cost for DALL-E models
-- `calculate_audio_cost(model_name, duration_minutes)` - Calculate cost for audio transcription (Whisper)
-
-### Examples Output
-
-The script demonstrates:
-
-1. **GPT-4o language model** - Basic token-based pricing
-2. **GPT-4o with cached input** - Using cache to reduce costs
-3. **gpt-image-1** - Token-based image generation with quality levels
-4. **DALL-E 3** - Fixed price per image
-5. **Whisper** - Audio transcription pricing (if available)
-6. **Cost comparison** - Compare 100 images across different models
-
-Example output:
-```
-OpenAI Cost Calculator
-==================================================
-
-Example 1: GPT-4o Language Model
---------------------------------------------------
-Model: gpt-4o
-Input: 500 tokens → $0.002125
-Output: 1500 tokens → $0.025500
-Total Cost: $0.027625
-
-...
-
-Comparison: Generate 100 images (1024x1024)
---------------------------------------------------
-gpt-image-1          (low     ): $   1.31
-gpt-image-1-mini     (low     ): $   0.54
-dall-e-3             (standard): $  12.00
-dall-e-2             (standard): $   1.60
+```python
+# Calculate cost for DALL-E-3
+cost = calculator.calculate_image_cost(
+    "dall-e-3",
+    count=5,
+    size="1024x1024",
+    quality="hd"
+)
+print(f"Cost: ${cost:.4f}")
 ```
 
-### Token Counting
+### Mixed Usage (Multiple Models)
+
+```python
+# Calculate total cost from multiple stages
+usage = {
+    "analyze": {
+        "model": "gpt-4o",
+        "input_tokens": 1000,
+        "output_tokens": 500
+    },
+    "generate": {
+        "model": "dall-e-3",
+        "count": 5,
+        "size": "1024x1024"
+    }
+}
+
+total_cost = calculator.calculate_mixed_usage(usage)
+print(f"Total: ${total_cost:.4f}")
+```
+
+### Credit-Based Billing
+
+```python
+# Estimate cost in credits
+estimate = calculator.estimate_credits(
+    items=10,           # Number of items
+    overhead=3,         # Fixed overhead
+    per_item=2,         # Cost per item
+    currency="credits"
+)
+
+print(f"Total: {estimate.total} {estimate.currency}")
+```
+
+### Variance Tracking
+
+```python
+# Compare estimated vs actual cost
+actual = calculator.calculate_actual_cost(
+    estimated=1.50,
+    usage={"stage1": {"model": "gpt-4o", "input_tokens": 1000, "output_tokens": 500}}
+)
+
+print(f"Estimated: ${actual.estimated:.4f}")
+print(f"Actual: ${actual.actual:.4f}")
+print(f"Variance: {actual.variance_percent:+.1f}%")
+```
+
+## 💡 Cost Optimization Tips
+
+1. **Use appropriate quality levels**
+   - Low quality images are significantly cheaper than high quality
+   - Only use HD quality when necessary
+
+2. **Leverage cached input**
+   - Cached input tokens are typically 90% cheaper
+   - Reuse context across multiple requests
+
+3. **Choose the right model**
+   - gpt-image-1-mini is ~50% cheaper than gpt-image-1
+   - GPT-5-nano is much cheaper than GPT-4o for simple tasks
+
+4. **Monitor token usage**
+   - Test with small samples first
+   - Account for system messages and formatting overhead
+   - Add 10-20% buffer for production estimates
+
+## 📊 Token Counting
 
 To accurately count tokens before making API calls:
 
@@ -126,51 +151,25 @@ token_count = len(tokens)
 print(f"Token count: {token_count}")
 ```
 
-### Cost Optimization Tips
+## 🔗 Data Source
 
-1. **Use appropriate quality levels**
-   - Low quality images are ~23× cheaper than standard quality
-   - Only use high quality when necessary
+The library automatically loads pricing data from:
+- **Primary**: https://bes-dev.github.io/openai-pricing/api.json
+- **Fallback**: Local cache (~/.openai_pricing/pricing_cache.json)
+- **Cache duration**: 12 hours (configurable)
 
-2. **Leverage cached input**
-   - Cached input tokens are 50% cheaper
-   - Reuse context across multiple requests
+Pricing is updated daily via GitHub Actions and always reflects the latest OpenAI pricing.
 
-3. **Choose the right model**
-   - gpt-image-1-mini is ~50% cheaper than gpt-image-1
-   - GPT-3.5 is much cheaper than GPT-4 for simple tasks
+## 📚 Documentation
 
-4. **Monitor token usage**
-   - Test with small samples first
-   - Account for system messages and formatting overhead
-   - Add 10-20% buffer for production estimates
+For complete API documentation, see the [main README](../README.md).
 
-### Data Source
+## 🔗 Links
 
-The calculator loads pricing data from:
-1. Local file `github_pages/api.json` (if available)
-2. Remote API: https://bes-dev.github.io/openai_models_pricing/api.json
+- **Pricing API**: https://bes-dev.github.io/openai-pricing/
+- **Repository**: https://github.com/bes-dev/openai-pricing
+- **Issues**: https://github.com/bes-dev/openai-pricing/issues
 
-Pricing is updated daily via GitHub Actions.
+## 📄 License
 
-### Error Handling
-
-The calculator includes error handling for:
-- Model not found
-- Invalid quality levels
-- Invalid resolutions
-- Missing pricing data
-
-Errors are returned as `ValueError` with descriptive messages.
-
-### Contributing
-
-To add support for new model types:
-
-1. Add a new calculation method to `OpenAICostCalculator`
-2. Add examples to the `main()` function
-3. Update this README
-
-### License
-
-Apache License 2.0 - see parent directory [LICENSE](../LICENSE)
+Apache License 2.0 - see [LICENSE](../LICENSE)
