@@ -38,11 +38,11 @@ class ImageUsage(BaseModel):
     size: str = Field("1024x1024", description="Image size")
     quality: str = Field("standard", description="Image quality")
 
-    @field_validator('quality')
+    @field_validator("quality")
     @classmethod
     def validate_quality(cls, v: str) -> str:
         """Validate quality is either 'standard' or 'hd'."""
-        if v not in ('standard', 'hd'):
+        if v not in ("standard", "hd"):
             raise ValueError(f"quality must be 'standard' or 'hd', got '{v}'")
         return v
 
@@ -64,8 +64,8 @@ class CostEstimate(BaseModel):
     total: float = Field(..., ge=0.0, description="Total cost")
     currency: str = Field("credits", description="Currency unit")
 
-    @model_validator(mode='after')
-    def validate_total(self) -> 'CostEstimate':
+    @model_validator(mode="after")
+    def validate_total(self) -> "CostEstimate":
         """Validate that total matches calculation."""
         expected_total = self.overhead + (self.items * self.per_item)
         if abs(self.total - expected_total) > 0.0001:
@@ -103,8 +103,8 @@ class ActualCost(BaseModel):
         """Calculate savings (negative if over budget)."""
         return self.estimated - self.actual
 
-    @model_validator(mode='after')
-    def calculate_variance(self) -> 'ActualCost':
+    @model_validator(mode="after")
+    def calculate_variance(self) -> "ActualCost":
         """Calculate variance percentage."""
         if self.estimated > 0:
             self.variance_percent = ((self.actual - self.estimated) / self.estimated) * 100
@@ -133,18 +133,24 @@ class ModelPricing(BaseModel):
     # Token-based pricing
     input_price: Optional[float] = Field(None, ge=0.0, description="Input price per 1M tokens")
     output_price: Optional[float] = Field(None, ge=0.0, description="Output price per 1M tokens")
-    cached_input_price: Optional[float] = Field(None, ge=0.0, description="Cached input price per 1M tokens")
+    cached_input_price: Optional[float] = Field(
+        None, ge=0.0, description="Cached input price per 1M tokens"
+    )
 
     # Image pricing
-    image_pricing: Optional[dict[str, dict[str, float]]] = Field(None, description="Image pricing by quality/size")
+    image_pricing: Optional[dict[str, dict[str, float]]] = Field(
+        None, description="Image pricing by quality/size"
+    )
 
     # Video pricing
-    video_price_per_second: Optional[float] = Field(None, ge=0.0, description="Video price per second")
+    video_price_per_second: Optional[float] = Field(
+        None, ge=0.0, description="Video price per second"
+    )
 
     # Metadata
     source: str = Field("api", description="Data source")
 
-    @field_validator('pricing_type')
+    @field_validator("pricing_type")
     @classmethod
     def validate_pricing_type(cls, v: str) -> str:
         """Validate pricing type."""

@@ -153,8 +153,8 @@ class PricingProvider:
                     logger.warning("Using expired cache as fallback")
                     self._pricing_data = cache_data["models"]
                     return self._pricing_data
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Failed to load fallback cache: {e}")
 
             # Return empty dict as last resort
             logger.error("No pricing data available")
@@ -164,12 +164,12 @@ class PricingProvider:
         """Fetch pricing data from API."""
         logger.debug(f"Fetching pricing from {self.api_url}")
         with urllib.request.urlopen(self.api_url, timeout=10) as response:
-            data = json.loads(response.read().decode('utf-8'))
+            data = json.loads(response.read().decode("utf-8"))
         return data.get("models", {})
 
     def _load_from_cache(self) -> dict:
         """Load data from cache file."""
-        with open(self.cache_file, 'r') as f:
+        with open(self.cache_file, "r") as f:
             data = json.load(f)
 
         # Parse timestamp
@@ -191,7 +191,7 @@ class PricingProvider:
 
         try:
             self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.cache_file, 'w') as f:
+            with open(self.cache_file, "w") as f:
                 json.dump(cache_data, f, indent=2)
             logger.debug(f"Saved {len(models)} models to cache")
         except Exception as e:

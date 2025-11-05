@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import timedelta
 
 from .pricing import PricingProvider
-from .models import TokenUsage, ImageUsage, CostEstimate, ActualCost, ModelPricing
+from .models import CostEstimate, ActualCost, ModelPricing
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class PricingCalculator:
             cache_file: Optional custom cache file location
             cache_duration: Optional cache validity duration
         """
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if api_url:
             kwargs["api_url"] = api_url
         if cache_file:
@@ -50,7 +50,7 @@ class PricingCalculator:
         if cache_duration:
             kwargs["cache_duration"] = cache_duration
 
-        self.provider = PricingProvider(**kwargs)
+        self.provider = PricingProvider(**kwargs)  # type: ignore[arg-type]
 
     # =========================================================================
     # Core calculation methods
@@ -143,7 +143,9 @@ class PricingCalculator:
             raise ValueError(f"No image pricing data for model: {model}")
 
         # Get price for quality/size
-        quality_pricing = pricing.image_pricing.get(quality, pricing.image_pricing.get("standard", {}))
+        quality_pricing = pricing.image_pricing.get(
+            quality, pricing.image_pricing.get("standard", {})
+        )
         price_per_image = quality_pricing.get(size, 0.0)
 
         if price_per_image == 0.0:
