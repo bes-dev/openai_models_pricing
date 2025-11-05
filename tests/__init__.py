@@ -1,1 +1,1 @@
-"""Tests for openai-pricing library."""
+"""Tests for openai-pricing-api library."""

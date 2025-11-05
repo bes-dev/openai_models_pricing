@@ -1,6 +1,6 @@
 """Basic tests for PricingCalculator."""
 
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 
 def test_calculator_initialization():

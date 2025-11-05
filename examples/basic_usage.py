@@ -1,6 +1,6 @@
-"""Basic usage examples for openai-pricing library."""
+"""Basic usage examples for openai-pricing-api library."""
 
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 
 def example_token_cost():

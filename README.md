@@ -5,7 +5,7 @@
 This project provides two integrated components:
 
 1. **Pricing Data Provider** - Automatically scrapes and publishes OpenAI pricing data via JSON API
-2. **Python Library** (`openai-pricing`) - Clean API for calculating costs and tracking usage
+2. **Python Library** (`openai-pricing-api`) - Clean API for calculating costs and tracking usage
 
 ## 🎯 Features
 
@@ -27,20 +27,20 @@ This project provides two integrated components:
 
 ## Demo
 
-Site available at: **https://bes-dev.github.io/openai-pricing/**
+Site available at: **https://bes-dev.github.io/openai-pricing-api/**
 
 ## 📦 Quick Start - Python Library
 
 Install the library:
 
 ```bash
-pip install openai-pricing
+pip install openai-pricing-api
 ```
 
 Calculate costs:
 
 ```python
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 calculator = PricingCalculator()
 
@@ -75,7 +75,7 @@ For complete library documentation, see [Python Library Usage](#-python-library-
 ## 📁 Project Structure
 
 ```
-openai-pricing/
+openai-pricing-api/
 ├── .github/workflows/
 │   ├── update-pricing.yml         # Daily pricing updates
 │   ├── publish-pypi.yml           # PyPI publishing (WIP)
@@ -106,7 +106,7 @@ openai-pricing/
 ### Option 1: Use Python Library (Recommended)
 
 ```bash
-pip install openai-pricing
+pip install openai-pricing-api
 ```
 
 See [Python Library Usage](#-python-library-usage) for full documentation.
@@ -150,7 +150,7 @@ Fork this repository to your GitHub account.
 ### 5. Check the Result
 
 After the workflow completes successfully:
-- Open https://bes-dev.github.io/openai-pricing/
+- Open https://bes-dev.github.io/openai-pricing-api/
 - It may take 1-2 minutes for the site to become available
 - Check the Actions tab for the deployment URL in the workflow summary
 
@@ -159,7 +159,7 @@ After the workflow completes successfully:
 ### Simple API (Recommended)
 
 ```bash
-curl https://bes-dev.github.io/openai-pricing/api.json
+curl https://bes-dev.github.io/openai-pricing-api/api.json
 ```
 
 Response:
@@ -183,7 +183,7 @@ Response:
 ### JavaScript Example
 
 ```javascript
-fetch('https://bes-dev.github.io/openai-pricing/api.json')
+fetch('https://bes-dev.github.io/openai-pricing-api/api.json')
   .then(res => res.json())
   .then(data => {
     console.log('Models:', data.models);
@@ -196,7 +196,7 @@ fetch('https://bes-dev.github.io/openai-pricing/api.json')
 ```python
 import requests
 
-url = 'https://bes-dev.github.io/openai-pricing/api.json'
+url = 'https://bes-dev.github.io/openai-pricing-api/api.json'
 data = requests.get(url).json()
 
 # Filter by category
@@ -373,24 +373,24 @@ Each model in the JSON has the following fields:
 
 ## 📚 Python Library Usage
 
-The `openai-pricing` Python library provides a clean API for calculating costs across all OpenAI model types.
+The `openai-pricing-api` Python library provides a clean API for calculating costs across all OpenAI model types.
 
 ### Installation
 
 ```bash
 # From PyPI
-pip install openai-pricing
+pip install openai-pricing-api
 
 # From source (for development)
-git clone https://github.com/bes-dev/openai-pricing.git
-cd openai-pricing
+git clone https://github.com/bes-dev/openai-pricing-api.git
+cd openai-pricing-api
 pip install -e .
 ```
 
 ### Basic Usage
 
 ```python
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 calculator = PricingCalculator()
 ```
@@ -656,7 +656,7 @@ except ValueError as e:
 ### Caching
 
 The library automatically caches pricing data:
-- **Location**: `~/.openai_pricing/pricing_cache.json`
+- **Location**: `~/.openai_pricing_api/pricing_cache.json`
 - **Duration**: 12 hours (configurable)
 - **Fallback**: Uses cached data if API is unavailable
 - **Update**: Automatically refreshes expired cache
@@ -673,7 +673,7 @@ For accurate token counting:
 
 ```python
 import tiktoken
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 # Count tokens
 encoding = tiktoken.encoding_for_model("gpt-4o")
@@ -891,10 +891,10 @@ Generate 100 images with text prompt (1024x1024):
 
 ### Automated Cost Calculator
 
-For automated cost calculation, use the `openai-pricing` Python library:
+For automated cost calculation, use the `openai-pricing-api` Python library:
 
 ```bash
-pip install openai-pricing
+pip install openai-pricing-api
 ```
 
 See the [Python Library Usage](#-python-library-usage) section for complete documentation.

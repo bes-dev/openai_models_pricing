@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "openai-pricing"
+name = "openai-pricing-api"
 version = "0.1.0"
 description = "Simple and clean API for OpenAI model cost calculation and tracking with automatic pricing updates"
 readme = "README.md"
@@ -49,14 +49,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/bes-dev/openai-pricing"
-Documentation = "https://github.com/bes-dev/openai-pricing#readme"
-Repository = "https://github.com/bes-dev/openai-pricing"
-Issues = "https://github.com/bes-dev/openai-pricing/issues"
-"Pricing API" = "https://bes-dev.github.io/openai-pricing/"
+Homepage = "https://github.com/bes-dev/openai-pricing-api"
+Documentation = "https://github.com/bes-dev/openai-pricing-api#readme"
+Repository = "https://github.com/bes-dev/openai-pricing-api"
+Issues = "https://github.com/bes-dev/openai-pricing-api/issues"
+"Pricing API" = "https://bes-dev.github.io/openai-pricing-api/"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/openai_pricing"]
+packages = ["src/openai_pricing_api"]
 
 [tool.black]
 line-length = 100

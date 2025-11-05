@@ -15,7 +15,7 @@ from .models import ModelPricing
 logger = logging.getLogger(__name__)
 
 # Default configuration
-DEFAULT_API_URL = "https://bes-dev.github.io/openai-pricing/api.json"
+DEFAULT_API_URL = "https://bes-dev.github.io/openai-pricing-api/api.json"
 DEFAULT_CACHE_DURATION = timedelta(hours=12)
 
 
@@ -46,7 +46,7 @@ class PricingProvider:
 
         # Default cache location
         if cache_file is None:
-            cache_dir = Path.home() / ".openai_pricing"
+            cache_dir = Path.home() / ".openai_pricing_api"
             cache_dir.mkdir(exist_ok=True)
             cache_file = cache_dir / "pricing_cache.json"
 

@@ -13,7 +13,7 @@ Features:
 - Variance tracking
 
 Quick Start:
-    >>> from openai_pricing import PricingCalculator
+    >>> from openai_pricing_api import PricingCalculator
     >>> calculator = PricingCalculator()
     >>> cost = calculator.calculate_token_cost("gpt-4o", input_tokens=1000, output_tokens=500)
     >>> print(f"Cost: ${cost:.4f}")

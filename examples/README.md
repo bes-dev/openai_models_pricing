@@ -1,6 +1,6 @@
 # OpenAI Pricing - Examples
 
-This directory contains usage examples for the `openai-pricing` Python library.
+This directory contains usage examples for the `openai-pricing-api` Python library.
 
 ## 📦 Installation
 
@@ -8,7 +8,7 @@ Before running examples, install the library:
 
 ```bash
 # From PyPI (after release)
-pip install openai-pricing
+pip install openai-pricing-api
 
 # From source (for development)
 cd ..
@@ -39,7 +39,7 @@ python basic_usage.py
 ### Calculate Token Cost
 
 ```python
-from openai_pricing import PricingCalculator
+from openai_pricing_api import PricingCalculator
 
 calculator = PricingCalculator()
 
@@ -154,8 +154,8 @@ print(f"Token count: {token_count}")
 ## 🔗 Data Source
 
 The library automatically loads pricing data from:
-- **Primary**: https://bes-dev.github.io/openai-pricing/api.json
-- **Fallback**: Local cache (~/.openai_pricing/pricing_cache.json)
+- **Primary**: https://bes-dev.github.io/openai-pricing-api/api.json
+- **Fallback**: Local cache (~/.openai_pricing_api/pricing_cache.json)
 - **Cache duration**: 12 hours (configurable)
 
 Pricing is updated daily via GitHub Actions and always reflects the latest OpenAI pricing.
@@ -166,9 +166,9 @@ For complete API documentation, see the [main README](../README.md).
 
 ## 🔗 Links
 
-- **Pricing API**: https://bes-dev.github.io/openai-pricing/
-- **Repository**: https://github.com/bes-dev/openai-pricing
-- **Issues**: https://github.com/bes-dev/openai-pricing/issues
+- **Pricing API**: https://bes-dev.github.io/openai-pricing-api/
+- **Repository**: https://github.com/bes-dev/openai-pricing-api
+- **Issues**: https://github.com/bes-dev/openai-pricing-api/issues
 
 ## 📄 License
 
