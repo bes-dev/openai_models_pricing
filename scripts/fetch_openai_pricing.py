@@ -9,20 +9,22 @@ import re
 import sys
 from datetime import datetime, timezone
 from typing import Dict, Any
-from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 
 PRICING_URL = "https://platform.openai.com/docs/pricing"
 OUTPUT_FILE = "github_pages/pricing.json"
 API_FILE = "github_pages/api.json"
 HISTORY_FILE = "github_pages/history.json"
+SUPPORTED_TIERS = ("standard", "batch", "flex", "priority")
+PREFERRED_TIER_ORDER = ("standard", "batch", "flex", "priority")
 
 
 def fetch_html(url: str) -> str:
     """
     Fetch HTML content using Playwright with proper JavaScript rendering.
     """
+    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+
     print(f"Fetching {url} with Playwright...")
 
     with sync_playwright() as p:
@@ -81,9 +83,85 @@ def parse_price(text: str) -> float:
     return 0.0
 
 
-def parse_image_resolution_table(table, headers: list, pricing: Dict[str, Any]) -> None:
+def normalize_model_key(model_name: str) -> str:
+    """Normalize model name for use as a JSON key."""
+    return model_name.lower().replace(' ', '-').replace('·', '-')
+
+
+def normalize_text(text: str) -> str:
+    """Normalize text for heading/tier comparisons."""
+    return ' '.join(text.strip().lower().split())
+
+
+def infer_table_tier(table) -> str:
+    """Infer pricing tier from the closest preceding heading-like element."""
+    heading_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'strong', 'em']
+
+    for element in table.find_all_previous(heading_tags, limit=100):
+        text = normalize_text(element.get_text(" ", strip=True))
+        if text in SUPPORTED_TIERS:
+            return text
+
+    return "standard"
+
+
+def build_tier_payload(model_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a tier-specific pricing payload from extracted model data."""
+    return {
+        key: value for key, value in model_data.items()
+        if key not in ['model', 'timestamp', 'default_tier', 'available_tiers', 'tiers']
+    }
+
+
+def sync_default_tier_fields(entry: Dict[str, Any]) -> None:
+    """Expose a stable top-level view using the preferred default tier."""
+    tier_data = entry.get("tiers", {})
+    if not tier_data:
+        return
+
+    default_tier = next((tier for tier in PREFERRED_TIER_ORDER if tier in tier_data), None)
+    if not default_tier:
+        default_tier = next(iter(tier_data))
+
+    entry["default_tier"] = default_tier
+    entry["available_tiers"] = [tier for tier in PREFERRED_TIER_ORDER if tier in tier_data]
+
+    for field in ["pricing_type", "category", "input", "output", "cached_input", "price", "image_pricing"]:
+        if field in tier_data[default_tier]:
+            entry[field] = tier_data[default_tier][field]
+        elif field in entry:
+            del entry[field]
+
+
+def upsert_tiered_model(
+    pricing: Dict[str, Any],
+    model_name: str,
+    model_data: Dict[str, Any],
+    tier: str,
+) -> None:
+    """Create or update a model entry with tier-specific pricing."""
+    model_key = normalize_model_key(model_name)
+    tier_payload = build_tier_payload(model_data)
+
+    if model_key not in pricing:
+        pricing[model_key] = {
+            "model": model_name,
+            "timestamp": model_data["timestamp"],
+            "tiers": {},
+        }
+
+    entry = pricing[model_key]
+    entry["tiers"][tier] = tier_payload
+
+    if len(model_name) > len(entry["model"]):
+        entry["model"] = model_name
+
+    sync_default_tier_fields(entry)
+
+
+def parse_image_resolution_table(table, headers: list, pricing: Dict[str, Any], tier: str) -> None:
     """Parse image resolution pricing tables (e.g., 1024x1024, quality-based)."""
-    print(f"    Parsing image resolution table...")
+    print(f"    Parsing image resolution table for {tier} tier...")
 
     # Extract resolution headers (e.g., "1024 x 1024", "1024 x 1536")
     resolution_indices = {}
@@ -150,30 +228,38 @@ def parse_image_resolution_table(table, headers: list, pricing: Dict[str, Any]) 
         if not resolution_prices:
             continue
 
-        # Normalize model name
-        model_key = current_model.replace(' ', '-').replace('·', '-').lower()
+        model_key = normalize_model_key(current_model)
 
-        # Create or update pricing entry
         if model_key not in pricing:
             pricing[model_key] = {
                 "model": current_model,
-                "pricing_type": "per_image_resolution",
-                "category": "image_generation_token",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "image_pricing": {}
+                "tiers": {},
             }
 
-        # Add resolution pricing under quality
-        if "image_pricing" not in pricing[model_key]:
-            pricing[model_key]["image_pricing"] = {}
+        entry = pricing[model_key]
+        tier_entry = entry["tiers"].setdefault(
+            tier,
+            {
+                "pricing_type": "per_image_resolution",
+                "category": "image_generation_token",
+                "image_pricing": {},
+            },
+        )
+        tier_entry["image_pricing"][quality] = resolution_prices
 
-        pricing[model_key]["image_pricing"][quality] = resolution_prices
+        if len(current_model) > len(entry["model"]):
+            entry["model"] = current_model
+
+        sync_default_tier_fields(entry)
 
         print(f"      {quality}: {resolution_prices}")
 
 
 def parse_pricing_html(html: str) -> Dict[str, Any]:
     """Parse OpenAI pricing HTML and extract model prices."""
+    from bs4 import BeautifulSoup
+
     soup = BeautifulSoup(html, 'html.parser')
     pricing = {}
 
@@ -183,6 +269,8 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
 
     for table_idx, table in enumerate(tables):
         print(f"\nProcessing table {table_idx + 1}...")
+        tier = infer_table_tier(table)
+        print(f"  Inferred tier: {tier}")
 
         # Get headers
         headers = []
@@ -200,7 +288,7 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
         # Check if this is an image resolution pricing table
         if any('x' in h and any(char.isdigit() for char in h) for h in headers):
             print(f"  Detected image resolution pricing table")
-            parse_image_resolution_table(table, headers, pricing)
+            parse_image_resolution_table(table, headers, pricing, tier)
             continue
 
         # Skip if no relevant headers
@@ -318,18 +406,7 @@ def parse_pricing_html(html: str) -> Dict[str, Any]:
             has_pricing = any(k in model_data for k in ['input', 'output', 'price', 'cached_input'])
 
             if has_pricing:
-                # Normalize model name for merging
-                model_key = model_name.lower().replace(' ', '-').replace('·', '-')
-
-                # Merge with existing data if present
-                if model_key in pricing:
-                    # Update existing entry (merge fields)
-                    pricing[model_key].update({k: v for k, v in model_data.items() if k not in ['model', 'timestamp']})
-                    # Keep original model name if it's better
-                    if len(model_name) > len(pricing[model_key]['model']):
-                        pricing[model_key]['model'] = model_name
-                else:
-                    pricing[model_key] = model_data
+                upsert_tiered_model(pricing, model_name, model_data, tier)
 
                 print(f"    Extracted: {model_data}")
 

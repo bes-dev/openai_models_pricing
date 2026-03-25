@@ -15,6 +15,7 @@ This project provides two integrated components:
 - Web interface for browsing prices
 - Price history for the last 90 days
 - Search and filter models
+- Tier-aware pricing with `standard`, `batch`, `flex`, and `priority` support
 
 ### Python Library
 - Simple and clean API for cost calculation
@@ -171,6 +172,8 @@ Response:
       "pricing_type": "per_1m_tokens",
       "input": 2.5,
       "output": 10.0,
+      "default_tier": "standard",
+      "available_tiers": ["standard", "batch", "priority"],
       "timestamp": "2025-01-27T12:00:00Z"
     }
   },
@@ -341,6 +344,9 @@ Each model in the JSON has the following fields:
 - `model` - Model name
 - `pricing_type` - How the model is billed (per_1m_tokens, per_image, per_second, etc.)
 - `category` - Model category (see below)
+- `default_tier` - Tier exposed in the top-level `input`/`output` fields (usually `standard`)
+- `available_tiers` - List of tiers available for that model
+- `tiers` - Full tier-specific pricing payload keyed by tier name
 - `input` - Input price (for token-based models)
 - `output` - Output price (for token-based models)
 - `cached_input` - Cached input price (if available)
@@ -397,7 +403,7 @@ calculator = PricingCalculator()
 
 ### API Reference
 
-#### `calculate_token_cost(model, input_tokens=0, output_tokens=0, cached_tokens=0)`
+#### `calculate_token_cost(model, input_tokens=0, output_tokens=0, cached_tokens=0, tier=None)`
 
 Calculate cost for token-based models (GPT-4, GPT-3.5, embeddings, etc.).
 
@@ -410,6 +416,14 @@ cost = calculator.calculate_token_cost(
 )
 print(f"${cost:.4f}")  # $0.0125
 
+# Batch pricing for the same model
+batch_cost = calculator.calculate_token_cost(
+    "gpt-4o",
+    input_tokens=1000,
+    output_tokens=500,
+    tier="batch"
+)
+
 # With cached tokens
 cost = calculator.calculate_token_cost(
     "gpt-4o",
@@ -419,7 +433,7 @@ cost = calculator.calculate_token_cost(
 )
 ```
 
-#### `calculate_image_cost(model, count=1, size="1024x1024", quality="standard")`
+#### `calculate_image_cost(model, count=1, size="1024x1024", quality="standard", tier=None)`
 
 Calculate cost for image generation (DALL-E, gpt-image-1).
 
