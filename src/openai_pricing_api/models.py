@@ -124,6 +124,9 @@ class ModelPricing(BaseModel):
         cached_input_price: Price per 1M cached input tokens (optional)
         image_pricing: Pricing by size and quality (for image models)
         video_price_per_second: Price per second (for video models)
+        selected_tier: Tier resolved for this pricing view
+        default_tier: Default tier exposed by the API payload
+        available_tiers: Pricing tiers available for this model
         source: Data source (api, fallback, registry)
     """
 
@@ -148,6 +151,12 @@ class ModelPricing(BaseModel):
     )
 
     # Metadata
+    selected_tier: str = Field("standard", description="Resolved pricing tier")
+    default_tier: str = Field("standard", description="Default pricing tier")
+    available_tiers: list[str] = Field(default_factory=list, description="Available pricing tiers")
+    tiers: Optional[dict[str, dict[str, Any]]] = Field(
+        None, description="All available tier payloads for the model"
+    )
     source: str = Field("api", description="Data source")
 
     @field_validator("pricing_type")

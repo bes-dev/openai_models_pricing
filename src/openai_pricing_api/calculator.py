@@ -62,6 +62,7 @@ class PricingCalculator:
         input_tokens: int = 0,
         output_tokens: int = 0,
         cached_tokens: int = 0,
+        tier: Optional[str] = None,
     ) -> float:
         """Calculate cost for token-based model usage.
 
@@ -70,6 +71,7 @@ class PricingCalculator:
             input_tokens: Number of input tokens
             output_tokens: Number of output tokens
             cached_tokens: Number of cached input tokens (if supported)
+            tier: Optional pricing tier (e.g., "standard", "batch")
 
         Returns:
             Cost in USD
@@ -86,8 +88,10 @@ class PricingCalculator:
         if input_tokens < 0 or output_tokens < 0 or cached_tokens < 0:
             raise ValueError("Token counts must be >= 0")
 
-        pricing = self.provider.get_model_pricing(model)
+        pricing = self.provider.get_model_pricing(model, tier=tier)
         if not pricing:
+            if tier:
+                raise ValueError(f"Model or tier not found: {model} ({tier})")
             raise ValueError(f"Model not found: {model}")
 
         if pricing.pricing_type != "per_1m_tokens":
@@ -109,6 +113,7 @@ class PricingCalculator:
         count: int = 1,
         size: str = "1024x1024",
         quality: str = "standard",
+        tier: Optional[str] = None,
     ) -> float:
         """Calculate cost for image generation.
 
@@ -117,6 +122,7 @@ class PricingCalculator:
             count: Number of images
             size: Image size (e.g., "1024x1024", "1024x1792")
             quality: Image quality ("standard" or "hd")
+            tier: Optional pricing tier (e.g., "standard", "batch")
 
         Returns:
             Cost in USD
@@ -132,8 +138,10 @@ class PricingCalculator:
         if count < 1:
             raise ValueError("Count must be >= 1")
 
-        pricing = self.provider.get_model_pricing(model)
+        pricing = self.provider.get_model_pricing(model, tier=tier)
         if not pricing:
+            if tier:
+                raise ValueError(f"Model or tier not found: {model} ({tier})")
             raise ValueError(f"Model not found: {model}")
 
         if pricing.pricing_type != "per_image_resolution":
@@ -162,12 +170,14 @@ class PricingCalculator:
         self,
         model: str,
         duration_seconds: float,
+        tier: Optional[str] = None,
     ) -> float:
         """Calculate cost for video generation.
 
         Args:
             model: Model identifier (e.g., "sora-2")
             duration_seconds: Video duration in seconds
+            tier: Optional pricing tier (e.g., "standard", "batch")
 
         Returns:
             Cost in USD
@@ -182,8 +192,10 @@ class PricingCalculator:
         if duration_seconds < 0:
             raise ValueError("Duration must be >= 0")
 
-        pricing = self.provider.get_model_pricing(model)
+        pricing = self.provider.get_model_pricing(model, tier=tier)
         if not pricing:
+            if tier:
+                raise ValueError(f"Model or tier not found: {model} ({tier})")
             raise ValueError(f"Model not found: {model}")
 
         if pricing.pricing_type != "per_second":
@@ -237,6 +249,7 @@ class PricingCalculator:
                         input_tokens=stage_usage.get("input_tokens", 0),
                         output_tokens=stage_usage.get("output_tokens", 0),
                         cached_tokens=stage_usage.get("cached_tokens", 0),
+                        tier=stage_usage.get("tier"),
                     )
                 elif pricing.pricing_type == "per_image_resolution":
                     cost = self.calculate_image_cost(
@@ -244,11 +257,13 @@ class PricingCalculator:
                         count=stage_usage.get("count", 1),
                         size=stage_usage.get("size", "1024x1024"),
                         quality=stage_usage.get("quality", "standard"),
+                        tier=stage_usage.get("tier"),
                     )
                 elif pricing.pricing_type == "per_second":
                     cost = self.calculate_video_cost(
                         model,
                         duration_seconds=stage_usage.get("duration_seconds", 0.0),
+                        tier=stage_usage.get("tier"),
                     )
                 else:
                     logger.warning(f"Unknown pricing type for {model}: {pricing.pricing_type}")
@@ -348,16 +363,17 @@ class PricingCalculator:
     # Utility methods
     # =========================================================================
 
-    def get_model_pricing(self, model: str) -> Optional[ModelPricing]:
+    def get_model_pricing(self, model: str, tier: Optional[str] = None) -> Optional[ModelPricing]:
         """Get pricing information for a model.
 
         Args:
             model: Model identifier
+            tier: Optional pricing tier
 
         Returns:
             ModelPricing object or None if not found
         """
-        return self.provider.get_model_pricing(model)
+        return self.provider.get_model_pricing(model, tier=tier)
 
     def get_available_models(self) -> list[str]:
         """Get list of all available models.
@@ -366,6 +382,10 @@ class PricingCalculator:
             List of model identifiers
         """
         return self.provider.get_all_models()
+
+    def get_available_tiers(self, model: str) -> list[str]:
+        """Get list of available pricing tiers for a model."""
+        return self.provider.get_available_tiers(model)
 
     def refresh_pricing(self) -> bool:
         """Force refresh pricing data from API.

@@ -56,11 +56,12 @@ class PricingProvider:
         self._pricing_data: Optional[dict[str, dict]] = None
         self._cache_timestamp: Optional[datetime] = None
 
-    def get_model_pricing(self, model: str) -> Optional[ModelPricing]:
+    def get_model_pricing(self, model: str, tier: Optional[str] = None) -> Optional[ModelPricing]:
         """Get pricing for a specific model.
 
         Args:
             model: Model identifier
+            tier: Optional pricing tier (e.g. "standard", "batch")
 
         Returns:
             ModelPricing object or None if not found
@@ -73,14 +74,31 @@ class PricingProvider:
             return None
 
         try:
+            tier_data = model_data.get("tiers", {})
+            default_tier = model_data.get("default_tier", "standard")
+            available_tiers = model_data.get("available_tiers") or list(tier_data.keys())
+            selected_tier = tier or default_tier
+
+            if tier_data:
+                if selected_tier not in tier_data:
+                    logger.warning(f"Tier {selected_tier} not found for model: {model}")
+                    return None
+                resolved_data = tier_data[selected_tier]
+            else:
+                resolved_data = model_data
+
             return ModelPricing(
                 model=model,
-                pricing_type=model_data.get("pricing_type", "per_1m_tokens"),
-                input_price=model_data.get("input"),
-                output_price=model_data.get("output"),
-                cached_input_price=model_data.get("cached_input"),
-                image_pricing=model_data.get("image_pricing"),
-                video_price_per_second=model_data.get("price"),
+                pricing_type=resolved_data.get("pricing_type", "per_1m_tokens"),
+                input_price=resolved_data.get("input"),
+                output_price=resolved_data.get("output"),
+                cached_input_price=resolved_data.get("cached_input"),
+                image_pricing=resolved_data.get("image_pricing"),
+                video_price_per_second=resolved_data.get("price"),
+                selected_tier=selected_tier,
+                default_tier=default_tier,
+                available_tiers=available_tiers,
+                tiers=tier_data or None,
                 source=model_data.get("source", "api"),
             )
         except Exception as e:
@@ -95,6 +113,18 @@ class PricingProvider:
         """
         data = self._load_pricing()
         return list(data.keys())
+
+    def get_available_tiers(self, model: str) -> list[str]:
+        """Get available pricing tiers for a model."""
+        data = self._load_pricing()
+        model_data = data.get(model, {})
+        tier_data = model_data.get("tiers", {})
+
+        if model_data.get("available_tiers"):
+            return model_data["available_tiers"]
+        if tier_data:
+            return list(tier_data.keys())
+        return ["standard"] if model_data else []
 
     def refresh(self) -> bool:
         """Force refresh pricing data from API.
